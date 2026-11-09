@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>整数ガチャ!</title>
+<title>整数ガチャ</title>
 <style>
 :root{--bg:#faf8f4;--card:#fff;--fg:#1f2430;--mut:#6b7280;--line:#e4e0d8;--acc:#c2410c;--accfg:#fff;--l0:#15803d;--l1:#b45309;--l2:#b91c1c;--ans:#f3efe6;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -25,13 +25,14 @@ button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--lin
 .q{font-size:1.1rem;overflow-x:auto}
 .ans{display:none;margin-top:10px;padding:10px 14px;background:var(--ans);border-radius:10px;font-size:1.1rem;font-weight:700}
 .card.open .ans{display:block}
+.ex{font-weight:400;font-size:.95rem;margin-top:6px;color:var(--mut)}
 .foot{color:var(--mut);font-size:.85rem;margin-top:28px}
 </style>
 </head>
 <body>
 <main>
 <h1>整数ガチャ</h1>
-<p class="sub">整数問題をランダムで5題出題します。(1)(2) 初級、(3)(4) 中級、(5) 上級。全50タイプ、数値は毎回ランダム。ガチャは1日1回までです。</p>
+<p class="sub">整数問題をランダムで5題出題します。(1)(2) 初級、(3)(4) 中級、(5) 上級。全86タイプ、数値は毎回ランダム。ガチャは1時間に1回までです。</p>
 <div class="bar"><button id="roll">ガチャを回す</button><button id="all">すべての答えを見る</button></div>
 <p id="msg" class="sub" style="font-weight:700"></p>
 <div id="list"></div>
@@ -52,6 +53,8 @@ const mkN=(lo,hi,k)=>{for(;;){const ps=[2,3,5,7,11,13].sort(()=>Math.random()-.5
 const co=(k,v)=>k==1?v:k+v;
 const leg=(N,p)=>{let c=0;for(let q=p;q<=N;q*=p)c+=Math.floor(N/q);return c};
 const cop=(a,b)=>gcd(a,b)==1;
+const ord=(a,p)=>{let k=1,x=a%p;while(x!=1){x=x*a%p;k++}return k};
+const bg=(a,b)=>b?bg(b,a%b):a;
 const G=[
 /* ---- 初級 ---- */
 [0,()=>{const g=R(2,15);let a,b;do{a=g*R(3,30);b=g*R(3,30)}while(a==b);return[`${a} と ${b} の最大公約数を求めよ。`,gcd(a,b)]}],
@@ -105,26 +108,153 @@ const G=[
 [2,()=>{const N=R(20,200);let row=[1];for(let i=0;i<N;i++){const nr=[1];for(let j=1;j<row.length;j++)nr.push((row[j-1]+row[j])%2);nr.push(1);row=nr}return[`二項係数 <sub>${N}</sub>C<sub>k</sub>（k = 0, 1, …, ${N}）のうち、奇数であるものは何個あるか。`,row.filter(x=>x).length]}],
 [2,()=>{const g=R(2,6),S=g*R(7,30);let c=0;for(let a=1;2*a<S;a++)if(gcd(a,S-a)==g)c++;return[`和が ${S}、最大公約数が ${g} であるような自然数の組 (a, b)（a < b）は何組あるか。`,c]}],
 [2,()=>{const N=R(10,100);let s=0;for(let k=1;k<=N;k++)s+=Math.floor(N/k);return[`⌊${N}/1⌋ + ⌊${N}/2⌋ + … + ⌊${N}/${N}⌋ の値を求めよ。ただし ⌊x⌋ は x を超えない最大の整数。`,s]}],
-[2,()=>{const b=P([12,18,20,24,30,36,45,50,60,72,75]),N=R(30,300),f=fac(b);const z=Math.min(...Object.entries(f).map(([p,e])=>Math.floor(leg(N,+p)/e)));return[`${N}! を ${b} 進法で表したとき、末尾に 0 が連続して何個並ぶか。`,z]}]
+[2,()=>{const b=P([12,18,20,24,30,36,45,50,60,72,75]),N=R(30,300),f=fac(b);const z=Math.min(...Object.entries(f).map(([p,e])=>Math.floor(leg(N,+p)/e)));return[`${N}! を ${b} 進法で表したとき、末尾に 0 が連続して何個並ぶか。`,z]}],
+/* ---- 追加：整数特集より ---- */
+[0,()=>{const m=P([7,9,11,13,37]),N=R(1e6,1e9);return[`${N} を ${m} で割った余りを求めよ。`,N%m]}],
+[0,()=>{const m=R(5,60);let n=1;while(n*(n+1)/2%m)n++;return[`1 + 2 + … + n が ${m} の倍数となるような最小の自然数 n を求めよ。`,n]}],
+[0,()=>{const N=R(10,100);let s=0;for(let k=1;k<=N;k++)s+=Math.floor(Math.sqrt(k));return[`⌊√1⌋ + ⌊√2⌋ + … + ⌊√${N}⌋ の値を求めよ。ただし ⌊x⌋ は x を超えない最大の整数。`,s]}],
+[0,()=>{const a0=R(100,999),b0=R(10,a0-1);let a=a0,b=b0,c=0;while(b){[a,b]=[b,a%b];c++}return[`ユークリッドの互除法で ${a0} と ${b0} の最大公約数を求めるとき、割り算を何回行うか。（余りが 0 になる割り算まで数える）`,c]}],
+[1,()=>{const n=R(10,200),m=P([3,7,9,11,13,37]);let r=0;for(let i=0;i<n;i++)r=(r*10+1)%m;return[`1 が ${n} 個並んだ整数 111…1 を ${m} で割った余りを求めよ。`,r]}],
+[1,()=>{let a,b;do{a=R(3,15);b=R(3,15)}while(a==b||!cop(a,b));const ok=[true];for(let i=1;i<=a*b;i++)ok[i]=(i>=a&&ok[i-a])||(i>=b&&ok[i-b]);let m=0;for(let i=1;i<=a*b;i++)if(!ok[i])m=i;return[`${a} 円硬貨と ${b} 円硬貨だけを何枚でも使えるとき、支払うことのできない金額のうち最大のものを求めよ。`,m]}],
+[1,()=>{const n=R(5,40);let c=0;for(let x=Math.floor(n/2)+1;x<=n;x++)if(n*x%(2*x-n)==0)c++;return[`2/${n} = 1/x + 1/y を満たす自然数の組 (x, y)（x ≦ y）は何組あるか。`,c]}],
+[1,()=>{const n=R(5,40),m=P([7,11,13,17,19,23,29,31]);return[`フェルマー数 2<sup>2<sup>${n}</sup></sup> + 1 を ${m} で割った余りを求めよ。`,(pm(2,2**n,m)+1)%m]}],
+[1,()=>{const p=P([7,11,13,17,19,23,29,31,37,41,43,47]),a=R(2,p-1);return[`${sp(a,'k')} ≡ 1 (mod ${p}) となる最小の正の整数 k（${a} の mod ${p} における位数）を求めよ。`,ord(a,p)]}],
+[1,()=>{const p=P([7,11,13,17,19,23,29,31]);let c=0;for(let r=1;r<p;r++)if(ord(r,p)==p-1)c++;return[`1 以上 ${p - 1} 以下の整数 r のうち、${p} を法とする原始根（r, r<sup>2</sup>, …, r<sup>${p-2}</sup> のいずれも ${p} で割った余りが 1 でないもの）は何個あるか。`,c]}],
+[1,()=>{const p=P([11,13,17,19,23,29,31,37,41]),a=R(2,p-1);let v=-1;for(let x=1;x<p;x++)if(x*x%p==a)v=1;return[`ルジャンドル記号 (${a} / ${p}) の値を求めよ。（${a} が ${p} の平方剰余なら 1、そうでなければ −1）`,v]}],
+[1,()=>{const N=R(30,100);let c=0;for(let n=1;n<=N;n++){let ok=false;for(let a=0;a*a<=n;a++){const r=n-a*a,s=Math.round(Math.sqrt(r));if(s*s==r)ok=true}if(ok)c++}return[`${N} 以下の自然数のうち、2つの 0 以上の整数の平方の和で表せるものは何個あるか。`,c]}],
+[1,()=>{const n=R(20,200),m=R(3,40);let a=2,b=1;for(let i=0;i<n;i++)[a,b]=[b,(a+b)%m];return[`リュカ数 L<sub>0</sub> = 2, L<sub>1</sub> = 1, L<sub>n+2</sub> = L<sub>n+1</sub> + L<sub>n</sub> について、L<sub>${n}</sub> を ${m} で割った余りを求めよ。`,a%m]}],
+[1,()=>{let n;do{n=R(100,999)}while(new Set(String(n)).size<2);const x=n;let c=0;while(n!=495){const d=String(n).padStart(3,'0').split('').sort();n=+d.slice().reverse().join('')-+d.join('');c++}return[`3桁の自然数 ${x} に対し、「各桁を並べ替えてできる最大の数から最小の数を引く」（0 が先頭に来てもよい）操作を繰り返すと、何回目で初めて 495 になるか。`,c]}],
+[1,()=>{const N=R(10,100);let c=0;for(let x=-10;x<=10;x++)for(let y=-10;y<=10;y++)if(x*x+y*y<=N)c++;return[`x<sup>2</sup> + y<sup>2</sup> ≦ ${N} を満たす格子点（x, y がともに整数の点）は何個あるか。`,c]}],
+[1,()=>{const ps=primesTo(R(50,300));let m=0;for(let i=1;i<ps.length;i++)m=Math.max(m,ps[i]-ps[i-1]);return[`${ps[ps.length-1]} 以下の隣り合う素数の差の最大値を求めよ。`,m]}],
+[1,()=>{const N=R(50,300);let c=0;for(let p=2;p+2<=N;p++)if(isP(p)&&isP(p+2))c++;return[`${N} 以下の双子素数の組 (p, p+2) は何組あるか。`,c]}],
+[1,()=>{const N=2*R(10,100);let c=0;for(let p=2;2*p<=N;p++)if(isP(p)&&isP(N-p))c++;return[`偶数 ${N} を 2つの素数の和 p + q（p ≦ q）で表す方法は何通りあるか。`,c]}],
+[1,()=>{const N=R(30,150);let c=0;for(let n=1;n<=N;n++)if(divs(n).reduce((s,x)=>s+x,0)>2*n)c++;return[`正の約数の総和が自分自身の2倍より大きい自然数（過剰数）は、${N} 以下に何個あるか。`,c]}],
+[1,()=>{const k=R(3,9);let g=0n;for(let n=1;n<=60;n++){let p=1n;for(let i=0;i<k;i++)p*=BigInt(n+i);g=bg(g,p)}return[`連続する ${k} 個の自然数の積は、つねに ある整数の倍数になる。そのような整数のうち最大のものを求めよ。`,g.toString()]}],
+[1,()=>{const n=R(10,300);let s=0;for(let i=1;i<=n;i++)if(gcd(i,n)==1)s+=i;return[`${n} 以下で ${n} と互いに素な正の整数の総和を求めよ。`,s]}],
+[1,()=>{const s=R(2,40),d=divs(s*s).length,g=gcd(d,s);return[`正の整数 n の正の約数の個数を d(n) とし、f(n) = d(n)/√n とする。f(${s*s}) を既約分数で表せ。`,s/g==1?`${d/g}`:`${d/g}/${s/g}`]}],
+[1,()=>{const N=R(20,2000);let s='';for(let i=1;s.length<N;i++)s+=i;return[`小数 0.12345678910111213… （1 から順に正の整数を並べたもの）の小数第 ${N} 位の数字を求めよ。`,s[N-1]]}],
+[1,()=>{const a=R(1,12),b=R(1,12),N=a**3+b**3;let c=0;for(let x=1;2*x**3<=N;x++){const r=N-x**3,y=Math.round(Math.cbrt(r));if(y**3==r&&x<=y)c++}return[`x<sup>3</sup> + y<sup>3</sup> = ${N} を満たす自然数の組 (x, y)（x ≦ y）は何組あるか。`,c]}],
+[1,()=>{const N=R(30,200);let c=0;for(let n=1;n<=N;n++)if(String(2n**BigInt(n))[0]=='1')c++;return[`2<sup>1</sup>, 2<sup>2</sup>, …, 2<sup>${N}</sup> のうち、最高位の数字が 1 であるものは何個あるか。`,c]}],
+[1,()=>{const p=P([23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97]),N=p-R(2,5);let f=1;for(let k=2;k<=N;k++)f=f*k%p;return[`${N}! を ${p}（素数）で割った余りを求めよ。`,f]}],
+[1,()=>{const n=2*R(1,14)+1,v=n**4+4;let i=2;while(v%i)i++;return[`n = ${n} のとき、n<sup>4</sup> + 4 の最小の素因数を求めよ。`,i]}],
+[1,()=>{const N=R(30,100);let c=0;for(let a=1;a<N;a++)for(let b=a+1;b<N;b++){const s=a*a+b*b,r=Math.round(Math.sqrt(s));if(r*r==s&&r<=N&&cop(a,b))c++}return[`a<sup>2</sup> + b<sup>2</sup> = c<sup>2</sup>、a < b、c ≦ ${N}、a と b は互いに素、を満たす自然数の組 (a, b, c) は何組あるか。`,c]}],
+[1,()=>{const N=R(100,500);let c=0;for(let n=2;n<=N;n++)if(Object.keys(fac(n)).length==3)c++;return[`${N} 以下の自然数のうち、異なる素因数をちょうど 3 個もつものは何個あるか。`,c]}],
+[2,()=>{const m=R(3,30);let a=0,b=1,c=0;do{[a,b]=[b,(a+b)%m];c++}while(a!=0||b!=1);return[`フィボナッチ数列 F<sub>0</sub> = 0, F<sub>1</sub> = 1, F<sub>n+2</sub> = F<sub>n+1</sub> + F<sub>n</sub> の各項を ${m} で割った余りは周期的に並ぶ。その最小の周期を求めよ。`,c]}],
+[2,()=>{for(;;){const p=P([2,3,5,7]),m=R(20,100),n=R(5,m-5),e=leg(m,p)-leg(n,p)-leg(m-n,p);if(e>0)return[`二項係数 <sub>${m}</sub>C<sub>${n}</sub> は素数 ${p} で最大何回割り切れるか。（${p}<sup>k</sup> で割り切れる最大の k）`,e]}}],
+[2,()=>{const p=P([3,5,7,11]),N=R(100,999),k=R(10,N-10);let C=1n;for(let i=0;i<k;i++)C=C*BigInt(N-i)/BigInt(i+1);return[`二項係数 <sub>${N}</sub>C<sub>${k}</sub> を ${p} で割った余りを求めよ。`,Number(C%BigInt(p))]}],
+[2,()=>{const D=P([2,3,5,6,7,8,10,11,12,13,14,15,17,19,20,21,22,23]);for(let y=1;;y++){const x=Math.round(Math.sqrt(D*y*y+1));if(x*x==D*y*y+1)return[`ペル方程式 x<sup>2</sup> − ${D}y<sup>2</sup> = 1 を満たす正の整数の組 (x, y) のうち、x が最小のものを求めよ。`,`(x, y) = (${x}, ${y})`]}}],
+[2,()=>{const a=R(2,60);let c=0;for(let n=1;n<=a;n++){const v=n*n+n-a,s=Math.round(Math.sqrt(v));if(v>=0&&s*s==v)c++}return[`x<sup>2</sup> + x − ${a} が 0 以上の整数の 2 乗になるような正の整数 x は何個あるか。`,c]}],
+[2,()=>{const N0=R(100,5000),fs=[1,1,2,6,24,120,720,5040];let k=1;while(fs[k+1]<=N0)k++;let n=N0;const d=[];for(let i=k;i>=1;i--){d.push(Math.floor(n/fs[i]));n%=fs[i]}return[`${N0} = a<sub>k</sub>·k! + … + a<sub>2</sub>·2! + a<sub>1</sub>·1!（0 ≦ a<sub>i</sub> ≦ i、a<sub>k</sub> ≠ 0）と一通りに表すとき、(a<sub>k</sub>, …, a<sub>1</sub>) を求めよ。`,`(${d.join(', ')})`]}],
+[2,()=>{const a=P([4,7,10,13,16]),n=R(3,60);let v=BigInt(a)**BigInt(n)-1n,c=0;while(v%3n==0n){v/=3n;c++}return[`${sp(a,n)} − 1 は 3 で最大何回割り切れるか。（3<sup>k</sup> で割り切れる最大の k を求めよ）`,c]}]
+];
+const E=[
+'ユークリッドの互除法（大きい方を小さい方で割った余りに置き換えていく）、または素因数分解で共通部分を取る。',
+'最小公倍数 = 2数の積 ÷ 最大公約数。',
+'素因数分解して p<sup>a</sup>q<sup>b</sup>… とすると、約数の個数は (a+1)(b+1)…。',
+'素因数分解して p<sup>a</sup>q<sup>b</sup>… とすると、約数の総和は (1+p+…+p<sup>a</sup>)(1+q+…+q<sup>b</sup>)…。',
+'小さい素数から順に割っていく。',
+'0 の個数は素因数 5 の個数と一致する。⌊N/5⌋ + ⌊N/25⌋ + ⌊N/125⌋ + … で求める。',
+'一の位は周期的に繰り返すので、周期で割った余りに注目する。',
+'包除原理：全体 − (a の倍数) − (b の倍数) + (a, b の最小公倍数の倍数)。',
+'n で割り続け、出てきた余りを逆順に並べる。',
+'素因数分解し、奇数乗の素因数をあと 1 個ずつ補ってすべての指数を偶数にする。',
+'小さい素数から順に割っていき、最後に残った数が最大の素因数。',
+'エラトステネスの篩で素数を列挙して数える。',
+'素数を列挙してすべて足す。',
+'2 を少なくとも 1 個含む約数を数える。n = 2<sup>a</sup>×(奇数) なら、a × (奇数部分の約数の個数)。',
+'m で割って r 余る数は r, r+m, r+2m, … と並ぶ。この中で N 以下のものを数える。',
+'互除法で特解を 1 組見つけ、一般解 x = x<sub>0</sub> + bt, y = y<sub>0</sub> − at を作って x > 0 で最小のものを選ぶ。',
+'a と m は互いに素なので逆元があり、両辺に逆元をかける。',
+'g = gcd(a, m) とする。g が b の約数なら解はちょうど g 個ある。',
+'x = a + mk とおき、もう一方の合同式に代入して k を決める（中国剰余定理）。',
+'φ(n) = n∏(1 − 1/p)（p は n の素因数）。',
+'(x − n)(y − n) = n<sup>2</sup> と変形し、n<sup>2</sup> の約数の組を数える。',
+'(x + y)(x − y) = N と変形し、偶奇が同じになる約数の組を数える。',
+'mod 100 で考える。累乗の下 2 桁は周期的に繰り返す。',
+'k! が m の倍数になるような k 以降の項は余り 0。それより前の項だけを mod m で足す。',
+'フェルマーの小定理 a<sup>p−1</sup> ≡ 1 (mod p) で指数を p − 1 で割った余りに落とす。',
+'(n+a)/(n+b) = 1 + (a−b)/(n+b) と変形。n + b が a − b の約数となる n をすべて足す。',
+'約数の逆数和は σ(n)/n（σ は約数の総和）。約分して答える。',
+'gcd(2<sup>a</sup>−1, 2<sup>b</sup>−1) = 2<sup>gcd(a,b)</sup> − 1。',
+'ルジャンドルの定理：⌊N/p⌋ + ⌊N/p<sup>2</sup>⌋ + …。',
+'k 個の連続整数の和は k(2m + k − 1)/2。k を動かして条件を満たすものを数える。',
+'a を小さい順に試し、N − a<sup>2</sup> が平方数になるか調べる。',
+'a<sup>2</sup> + b<sup>2</sup> が平方数になる組を小さい順に調べる（(3,4,5), (6,8,10), (5,12,13), …）。',
+'約数の個数が k になる指数の組み合わせ（指数+1 の積が k）を考え、大きい指数を小さい素数に割り当てる。',
+'桁数は ⌊b log<sub>10</sub> a⌋ + 1。',
+'10<sup>k</sup> ≡ 1 (mod N) となる最小の k が循環節の長さ。',
+'n(n−1) ≡ 0 (mod m)。m を互いに素な素数べきに分け、それぞれで n ≡ 0, 1 の 2 通り → 2<sup>(異なる素因数の個数)</sup> 個。',
+'x = 1, 2, … を 2 乗して p で割った余りを調べる。x と p − x がペアで解になる。',
+'x を 0 から動かし、N − ax が b で割り切れるかを調べる。',
+'gcd(k, N) = d となる k は φ(N/d) 個。よって Σ d·φ(N/d) を N の約数 d について足す。',
+'n<sup>2</sup> + a ≡ b<sup>2</sup> + a (mod n+b) なので、n + b は b<sup>2</sup> + a の約数。最大は n + b = b<sup>2</sup> + a。',
+'(x − b)(y − a) = c + ab と変形し、右辺の正負の約数の組を数える。',
+'余りの種類 0, 1, …, m−1 のうち条件を満たすものを調べ、周期 m で数える。',
+'a ≦ b ≦ c として小さい方から順に調べる。',
+'φ(n) = k を満たす n は k の数倍以内に収まるので、その範囲を調べる。',
+'b<sup>n</sup> が d 桁↔ d−1 ≦ n log<sub>10</sub> b < d。この不等式を満たす整数 n を数える。',
+'素因数ごとに必要な指数を、n! の素因数の指数（ルジャンドルの定理）で確かめ、最小の n を探す。',
+'奇数になる個数は 2<sup>(N を 2 進法で表したときの 1 の個数)</sup>。',
+'a = ga′, b = gb′ とおくと a′ + b′ = S/g、a′ と b′ は互いに素。この組の数を数える。',
+'k ごとに ⌊N/k⌋ を計算して足す。（N 以下の整数の約数の個数の総和と等しい）',
+'b を素因数分解し b = ∏p<sup>e</sup> とする。各 p について N! の p の指数を e で割った商（切り捨て）を求め、最小値を取る。',
+'各桁の位取り 10<sup>k</sup> を mod m で置き換えて余りを計算する（合同式）。',
+'n(n+1)/2 が m の倍数 → n(n+1) が 2m の倍数。n = 1, 2, … と順に調べる。',
+'m<sup>2</sup> ≦ k < (m+1)<sup>2</sup> のとき ⌊√k⌋ = m。区間ごとにまとめて足す。',
+'a = bq + r という割り算を余りが 0 になるまで繰り返し、回数を数える。',
+'R<sub>n</sub> = 10R<sub>n−1</sub> + 1 を mod m で繰り返す。',
+'フロベニウスの硬貨問題：A, B が互いに素のとき、最大は AB − A − B。',
+'2xy = n(x + y) を変形して (2x − n)(2y − n) = n<sup>2</sup> と変形し、約数の組を調べる。',
+'2<sup>k</sup> を mod m で繰り返し 2 乗していく（繰り返し二乗法）。',
+'a, a<sup>2</sup>, a<sup>3</sup>, … を mod p で順に調べ、初めて 1 になるところ。位数は p − 1 の約数。',
+'法 p の原始根は φ(p − 1) 個。',
+'x<sup>2</sup> ≡ a となる x があるかを調べる。またはオイラーの規準 a<sup>(p−1)/2</sup> ≡ ±1。',
+'1 から順に調べて表せるものを数える。（4k+3 型の素因数の指数がすべて偶数なら表せる）',
+'漸化式 L<sub>n+2</sub> = L<sub>n+1</sub> + L<sub>n</sub> を mod m で順に計算する。',
+'実際に操作を繰り返す。3 桁は必ず 495 に到達する。',
+'x を 1 つ固定し、条件を満たす y の個数を数えて足す。',
+'素数を小さい順に並べ、隣り合う素数の差を調べる。',
+'素数を列挙し、p と p + 2 がともに素数になる組を数える。',
+'p ≦ N/2 の素数 p について、N − p も素数かどうかを調べる。',
+'各 n の約数の総和 σ(n) を計算し、σ(n) > 2n となるものを数える（12, 18, 20, 24, …）。',
+'k 個の連続する整数の積は k! の倍数。よって最大は k!。',
+'n > 2 のとき、k と n − k はペアで互いに素。和は nφ(n)/2。',
+'d(s<sup>2</sup>) を素因数分解で数え、√n = s で割って約分する。',
+'1 桁の数が 9 文字、2 桁の数が 180 文字、… と桁ごとに数えて位置を突き止める。',
+'x を小さい順に試し、N − x<sup>3</sup> が立方数になるか調べる。',
+'2<sup>n</sup> の最高位が 1 ↔ n log<sub>10</sub>2 の小数部分が log<sub>10</sub>2 未満。実際に数える。',
+'ウィルソンの定理 (p−1)! ≡ −1 を使い、残りの積は p − k ≡ −k として計算する。',
+'n<sup>4</sup> + 4 = (n<sup>2</sup> + 2n + 2)(n<sup>2</sup> − 2n + 2)（ソフィー・ジェルマンの恒等式）と因数分解し、素因数を調べる。',
+'a < b を互いに素として調べる。原始ピタゴラス数は (m<sup>2</sup>−n<sup>2</sup>, 2mn, m<sup>2</sup>+n<sup>2</sup>)（m > n、互いに素、偶奇が違う）。',
+'各整数を素因数分解し、異なる素因数の個数を数える。',
+'余りの組 (F<sub>n</sub>, F<sub>n+1</sub>) が初めて (0, 1) に戻るまで計算する。',
+'クンマーの定理：v<sub>p</sub>(m!) − v<sub>p</sub>(n!) − v<sub>p</sub>((m−n)!)（ルジャンドルの定理を 3 回使う）。',
+'リュカの定理：N, k を p 進法で表し、各桁の二項係数の積を mod p で計算する。',
+'y = 1, 2, … を試し、Dy<sup>2</sup> + 1 が初めて平方数になるところを探す。',
+'n > a のとき n<sup>2</sup> < n<sup>2</sup> + n − a < (n+1)<sup>2</sup> で平方数になれない。よって n ≦ a を調べればよい。',
+'大きい階乗から順に割り、商を係数、余りを次へ回す。',
+'v<sub>p</sub>(x<sup>n</sup> − y<sup>n</sup>) = v<sub>p</sub>(x − y) + v<sub>p</sub>(n)。ここでは (a − 1) の 3 の指数 + n の 3 の指数。'
 ];
 const L=[0,1,2].map(l=>G.filter(g=>g[0]==l));
 const sh=a=>[...a].sort(()=>Math.random()-.5);
 const NAME=['初級','中級','上級'];
 function build(){
   const gs=[...sh(L[0]).slice(0,2),...sh(L[1]).slice(0,2),...sh(L[2]).slice(0,1)];
-  return gs.map((g,i)=>{const[q,a]=g[1]();return `<div class="card"><div class="top"><span class="no">(${i+1})</span><span class="tag t${g[0]}">${NAME[g[0]]}</span></div><div class="q">${q}</div><div class="ans">答え：${a}</div><button class="tg" style="margin-top:10px">答えを見る</button></div>`}).join('');
+  return gs.map((g,i)=>{const[q,a]=g[1]();return `<div class="card"><div class="top"><span class="no">(${i+1})</span><span class="tag t${g[0]}">${NAME[g[0]]}</span></div><div class="q">${q}</div><div class="ans">答え：${a}<div class="ex">解説：${E[G.indexOf(g)]}</div></div><button class="tg" style="margin-top:10px">答えを見る</button></div>`}).join('');
 }
 const KEY='integerGachaDaily';
-const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+const HOUR=3600000;
+let tm;
+function wait(t){clearInterval(tm);const tick=()=>{const r=t+HOUR-Date.now(),b=document.getElementById('roll'),m=document.getElementById('msg');if(r<=0){clearInterval(tm);done=false;b.disabled=false;b.style.opacity=1;m.textContent='ガチャを回せます。';return}done=true;b.disabled=true;b.style.opacity=.5;m.textContent='次に回せるまで あと '+Math.floor(r/60000)+'分'+String(Math.floor(r%60000/1000)).padStart(2,'0')+'秒'};tick();tm=setInterval(tick,1000)}
 const ld=()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}};
 let done=false;
-function show(html,spent){document.getElementById('list').innerHTML=html;done=spent;const b=document.getElementById('roll');b.disabled=spent;b.style.opacity=spent?.5:1;document.getElementById('msg').textContent=spent?'今日はもうガチャを回しました。また明日どうぞ。（0時にリセット）':''}
-function roll(){if(done)return;const h=build();try{localStorage.setItem(KEY,JSON.stringify({d:today(),h}))}catch(e){}show(h,true)}
+function show(html,spent){document.getElementById('list').innerHTML=html;done=spent;const b=document.getElementById('roll');b.disabled=spent;b.style.opacity=spent?.5:1;if(!spent)document.getElementById('msg').textContent=''}
+function roll(){if(done)return;const h=build(),t=Date.now();try{localStorage.setItem(KEY,JSON.stringify({t,h}))}catch(e){}show(h,true);wait(t)}
 document.getElementById('roll').addEventListener('click',roll);
 document.getElementById('all').addEventListener('click',()=>document.querySelectorAll('.card').forEach(c=>c.classList.add('open')));
 document.getElementById('list').addEventListener('click',e=>{if(e.target.classList.contains('tg'))e.target.parentNode.classList.toggle('open')});
 const saved=ld();
-if(saved&&saved.d===today())show(saved.h,true);else show('<div class="card"><div class="q">「ガチャを回す」を押して、今日の5題を引こう。</div></div>',false);
+if(saved&&saved.t&&Date.now()-saved.t<HOUR){show(saved.h,true);wait(saved.t)}else if(saved&&saved.t){show(saved.h,false);document.getElementById('msg').textContent='ガチャを回せます。'}else show('<div class="card"><div class="q">「ガチャを回す」を押して、今日の5題を引こう。</div></div>',false);
 </script>
 </body>
 </html>
