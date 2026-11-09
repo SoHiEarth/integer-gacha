@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>整数ガチャ</title>
+<style>
+:root{--bg:#faf8f4;--card:#fff;--fg:#1f2430;--mut:#6b7280;--line:#e4e0d8;--acc:#c2410c;--accfg:#fff;--l0:#15803d;--l1:#b45309;--l2:#b91c1c;--ans:#f3efe6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16181d;--card:#1f2229;--fg:#eceae4;--mut:#9ca3af;--line:#33363f;--acc:#f97316;--accfg:#1a1208;--l0:#4ade80;--l1:#fbbf24;--l2:#f87171;--ans:#272a33}}
+:root[data-theme="dark"]{--bg:#16181d;--card:#1f2229;--fg:#eceae4;--mut:#9ca3af;--line:#33363f;--acc:#f97316;--accfg:#1a1208;--l0:#4ade80;--l1:#fbbf24;--l2:#f87171;--ans:#272a33}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 "Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+main{max-width:720px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:2rem;margin:0 0 4px;letter-spacing:.05em}
+.sub{color:var(--mut);margin:0 0 20px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:8px 16px}
+#roll{background:var(--acc);color:var(--accfg);border:0;font-size:1.1rem;font-weight:700;padding:12px 28px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.no{font-weight:700;font-size:1.1rem}
+.tag{font-size:.75rem;font-weight:700;border:1px solid currentColor;border-radius:99px;padding:0 10px}
+.t0{color:var(--l0)}.t1{color:var(--l1)}.t2{color:var(--l2)}
+.q{font-size:1.1rem;overflow-x:auto}
+.ans{display:none;margin-top:10px;padding:10px 14px;background:var(--ans);border-radius:10px;font-size:1.1rem;font-weight:700}
+.card.open .ans{display:block}
+.foot{color:var(--mut);font-size:.85rem;margin-top:28px}
+</style>
+</head>
+<body>
+<main>
+<h1>整数ガチャ</h1>
+<p class="sub">整数問題をランダムで5題出題します。(1)(2) 初級、(3)(4) 中級、(5) 上級。全50タイプ、数値は毎回ランダム。ガチャは1日1回までです。</p>
+<div class="bar"><button id="roll">ガチャを回す</button><button id="all">すべての答えを見る</button></div>
+<p id="msg" class="sub" style="font-weight:700"></p>
+<div id="list"></div>
+<p class="foot">答えはすべてプログラムが計算（総当たり・定義どおりの計算）して出しており、解なしの問題が出ないように作ってあります。</p>
+</main>
+<script>
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),P=a=>a[R(0,a.length-1)];
+const gcd=(a,b)=>b?gcd(b,a%b):a,lcm=(a,b)=>a/gcd(a,b)*b;
+const pm=(a,e,m)=>{let r=1n,b=BigInt(a)%BigInt(m),M=BigInt(m),x=BigInt(e);while(x>0n){if(x&1n)r=r*b%M;b=b*b%M;x>>=1n}return Number(r%M)};
+const fac=n=>{const f={};for(let p=2;p*p<=n;p++)while(n%p==0){f[p]=(f[p]||0)+1;n/=p}if(n>1)f[n]=(f[n]||0)+1;return f};
+const divs=n=>{const d=[];for(let i=1;i<=n;i++)if(n%i==0)d.push(i);return d};
+const phi=n=>{let r=n;for(const p in fac(n))r=r/p*(p-1);return r};
+const sp=(b,e)=>e==1?`${b}`:`${b}<sup>${e}</sup>`;
+const pf=n=>Object.entries(fac(n)).map(([p,e])=>sp(p,e)).join('×');
+const isP=n=>n>1&&divs(n).length==2;
+const primesTo=N=>[...Array(N+1).keys()].filter(isP);
+const mkN=(lo,hi,k)=>{for(;;){const ps=[2,3,5,7,11,13].sort(()=>Math.random()-.5).slice(0,k);let n=1;ps.forEach(p=>n*=p**R(1,3));if(n>=lo&&n<=hi)return n}};
+const co=(k,v)=>k==1?v:k+v;
+const leg=(N,p)=>{let c=0;for(let q=p;q<=N;q*=p)c+=Math.floor(N/q);return c};
+const cop=(a,b)=>gcd(a,b)==1;
+const G=[
+/* ---- 初級 ---- */
+[0,()=>{const g=R(2,15);let a,b;do{a=g*R(3,30);b=g*R(3,30)}while(a==b);return[`${a} と ${b} の最大公約数を求めよ。`,gcd(a,b)]}],
+[0,()=>{let a,b;do{a=R(6,60);b=R(6,60)}while(a==b);return[`${a} と ${b} の最小公倍数を求めよ。`,lcm(a,b)]}],
+[0,()=>{const n=mkN(100,5000,R(2,3));return[`${n} の正の約数は全部で何個あるか。`,divs(n).length]}],
+[0,()=>{const n=mkN(60,2000,R(2,3));return[`${n} の正の約数の総和を求めよ。`,divs(n).reduce((s,x)=>s+x,0)]}],
+[0,()=>{let n;do{n=1;for(let i=R(3,5);i--;)n*=P([2,3,5,7,11,13])}while(n<100||n>3000);return[`${n} を素因数分解せよ。`,pf(n)]}],
+[0,()=>{const N=R(30,999);return[`${N}! を計算したとき、末尾に 0 が連続して何個並ぶか。`,leg(N,5)]}],
+[0,()=>{const a=R(2,9),k=R(20,999);return[`${sp(a,k)} の一の位の数字を求めよ。`,pm(a,k,10)]}],
+[0,()=>{const a=P([2,3,4,5,6,7]);let b;do{b=P([2,3,4,5,6,7])}while(b==a);const N=R(50,500);let c=0;for(let i=1;i<=N;i++)if(i%a&&i%b)c++;return[`${N} 以下の正の整数のうち、${a} の倍数でも ${b} の倍数でもないものは何個あるか。`,c]}],
+[0,()=>{const n=R(30,500),b=P([2,3,5,7,8]);return[`10進法の ${n} を ${b} 進法で表せ。`,`${n.toString(b)}<sub>(${b})</sub>`]}],
+[0,()=>{const m=P([2,3,5,6,7,10,11,13,14,15]),s=R(2,12),N=s*s*m;let k=1;while(!Number.isInteger(Math.sqrt(k*N)))k++;return[`${N} に正の整数 k をかけて平方数にしたい。最小の k を求めよ。`,k]}],
+[0,()=>{const n=R(200,3000);return[`${n} の最大の素因数を求めよ。`,Math.max(...Object.keys(fac(n)).map(Number))]}],
+[0,()=>{const N=R(30,200);return[`${N} 以下の素数は全部で何個あるか。`,primesTo(N).length]}],
+[0,()=>{const N=R(20,100);return[`${N} 以下の素数の総和を求めよ。`,primesTo(N).reduce((s,x)=>s+x,0)]}],
+[0,()=>{const n=2**R(1,4)*3**R(0,2)*5**R(0,1)*P([1,7,11]);return[`${n} の正の約数のうち、偶数であるものは何個あるか。`,divs(n).filter(d=>d%2==0).length]}],
+[0,()=>{const m=R(3,12),r=R(1,m-1),N=R(50,500);let c=0;for(let i=1;i<=N;i++)if(i%m==r)c++;return[`${N} 以下の正の整数のうち、${m} で割ると ${r} 余るものは何個あるか。`,c]}],
+/* ---- 中級 ---- */
+[1,()=>{let a,b;do{a=R(3,12);b=R(3,12)}while(!cop(a,b));const x0=R(1,15),y0=R(-15,15),c=a*x0+b*y0;let x=1;while(((c-a*x)%b+b)%b)x++;return[`方程式 ${co(a,'x')} + ${co(b,'y')} = ${c} の整数解 (x, y) のうち、x が正で最小となるものを求めよ。`,`(x, y) = (${x}, ${(c-a*x)/b})`]}],
+[1,()=>{const m=R(7,60);let a;do{a=R(2,m-1)}while(!cop(a,m));const b=R(1,m-1);let x=0;while((a*x-b)%m)x++;return[`合同式 ${co(a,'x')} ≡ ${b} (mod ${m}) の解 x を 0 ≦ x < ${m} の範囲で求めよ。`,`x = ${x}`]}],
+[1,()=>{for(;;){const m=R(12,60),a=R(2,m-1),g=gcd(a,m);if(g<2)continue;const b=g*R(1,m/g-1);let c=0;for(let x=0;x<m;x++)if((a*x-b)%m==0)c++;return[`合同式 ${co(a,'x')} ≡ ${b} (mod ${m}) を満たす x は、0 ≦ x < ${m} の範囲に何個あるか。`,c]}}],
+[1,()=>{const m=P([3,4,5,7,8,9]);let n;do{n=P([3,4,5,7,8,9,11])}while(!cop(m,n));const a=R(0,m-1),b=R(0,n-1);let x=1;while(x%m!=a||x%n!=b)x++;return[`x を ${m} で割ると ${a} 余り、${n} で割ると ${b} 余る。このような最小の正の整数 x を求めよ。`,x]}],
+[1,()=>{const n=mkN(60,3000,R(2,3));return[`${n} と互いに素である ${n} 以下の正の整数は何個あるか。`,phi(n)]}],
+[1,()=>{const n=R(2,24);let c=0;for(let x=n+1;x<=2*n;x++)if(n*x%(x-n)==0)c++;return[`方程式 1/x + 1/y = 1/${n} を満たす自然数の組 (x, y)（x ≦ y）は何組あるか。`,c]}],
+[1,()=>{for(;;){const N=R(20,300);let c=0;for(let d=1;d*d<N;d++)if(N%d==0&&(d+N/d)%2==0)c++;if(c)return[`x<sup>2</sup> − y<sup>2</sup> = ${N} を満たす正の整数の組 (x, y) は何組あるか。`,c]}}],
+[1,()=>{const a=P([3,7,9,11,13,17,19,21,23]),n=R(50,2000),r=pm(a,n,100);return[`${sp(a,n)} の下2桁を求めよ。（一の位が 0〜9 のときは「0 ○」の形で答えよ）`,String(r).padStart(2,'0')]}],
+[1,()=>{const N=R(10,40),m=P([7,11,13,17,12,30,36]);let f=1,s=0;for(let k=1;k<=N;k++){f=f*k%m;s=(s+f)%m}return[`1! + 2! + … + ${N}! を ${m} で割った余りを求めよ。`,s]}],
+[1,()=>{const p=P([7,11,13,17,19,23]),a=R(2,p-1),e=R(100,99999);return[`${sp(a,e)} を ${p} で割った余りを求めよ。`,pm(a,e,p)]}],
+[1,()=>{const b=R(1,6),a=b+R(10,60);let s=0;for(let n=1;n<=a-b;n++)if((n+a)%(n+b)==0)s+=n;return[`(n + ${a}) / (n + ${b}) が整数となるような自然数 n の総和を求めよ。`,s]}],
+[1,()=>{const n=R(12,200),s=divs(n).reduce((x,y)=>x+y,0),g=gcd(s,n);return[`${n} のすべての正の約数の逆数の総和を、既約分数で表せ。`,n/g==1?`${s/g}`:`${s/g}/${n/g}`]}],
+[1,()=>{let a,b;do{a=R(6,60);b=R(6,60)}while(a==b||gcd(a,b)<2);const g=gcd(a,b);return[`${sp(2,a)} − 1 と ${sp(2,b)} − 1 の最大公約数を求めよ。`,`${(1n<<BigInt(g))-1n}`]}],
+[1,()=>{const N=R(30,300),p=P([2,3,5,7,11,13]);return[`${N}! を素因数分解したとき、素因数 ${p} の指数を求めよ。`,leg(N,p)]}],
+[1,()=>{let N,c;do{N=R(20,300);c=0;for(let k=2;k*(k+1)/2<=N;k++)if((N-k*(k-1)/2)%k==0)c++}while(!c);return[`${N} を、2個以上の連続する正の整数の和で表す方法は何通りあるか。`,c]}],
+[1,()=>{const u=R(1,15),v=R(1,15),N=u*u+v*v;let c=0;for(let a=1;a*a<=N/2;a++){const b=Math.round(Math.sqrt(N-a*a));if(a<=b&&a*a+b*b==N)c++}return[`a<sup>2</sup> + b<sup>2</sup> = ${N} を満たす自然数の組 (a, b)（a ≦ b）は何組あるか。`,c]}],
+[1,()=>{const N=R(20,60);let c=0;for(let a=1;a<N;a++)for(let b=a+1;b<N;b++){const s=a*a+b*b,r=Math.round(Math.sqrt(s));if(r*r==s&&r<=N)c++}return[`a<sup>2</sup> + b<sup>2</sup> = c<sup>2</sup>、a < b ≦ c ≦ ${N} を満たす自然数の組 (a, b, c) は何組あるか。`,c]}],
+[1,()=>{const k=P([6,8,9,10,12,14,15,16,18,20,24]);let n=1;while(divs(n).length!=k)n++;return[`正の約数をちょうど ${k} 個もつ最小の自然数を求めよ。`,n]}],
+[1,()=>{const a=R(2,19),b=R(20,150);return[`${sp(a,b)} は何桁の整数か。`,`${(BigInt(a)**BigInt(b)).toString().length} 桁`]}],
+[1,()=>{let N;do{N=R(3,97)}while(N%2==0||N%5==0);let r=10%N,l=1;while(r!=1){r=r*10%N;l++}return[`1/${N} を小数で表したとき、循環節の長さを求めよ。`,l]}],
+[1,()=>{const m=R(12,150);let c=0;for(let n=0;n<m;n++)if((n*n-n)%m==0)c++;return[`n<sup>2</sup> ≡ n (mod ${m}) を満たす n は、0 ≦ n < ${m} の範囲に何個あるか。`,c]}],
+[1,()=>{const p=P([7,11,13,17,19,23,29,31,37,41,43,47]),r=R(1,p-1),a=r*r%p,xs=[];for(let x=0;x<p;x++)if((x*x-a)%p==0)xs.push(x);return[`合同式 x<sup>2</sup> ≡ ${a} (mod ${p}) の解 x を 0 ≦ x < ${p} の範囲ですべて求めよ。`,`x = ${xs.join(', ')}`]}],
+[1,()=>{for(;;){let a,b;do{a=R(3,9);b=R(3,9)}while(!cop(a,b));const N=R(40,150);let c=0;for(let x=0;a*x<=N;x++)if((N-a*x)%b==0)c++;if(c)return[`方程式 ${co(a,'x')} + ${co(b,'y')} = ${N} を満たす 0 以上の整数の組 (x, y) は何組あるか。`,c]}}],
+/* ---- 上級 ---- */
+[2,()=>{const N=R(12,60);let s=0;for(let k=1;k<=N;k++)s+=gcd(k,N);return[`gcd(k, ${N}) を k = 1, 2, …, ${N} にわたって足した総和を求めよ。ただし gcd(a, b) は最大公約数。`,s]}],
+[2,()=>{const b=R(2,9),a=R(3,40);let m=0;for(let n=1;n<=a+b*b;n++)if((n*n+a)%(n+b)==0)m=n;return[`n<sup>2</sup> + ${a} が n + ${b} で割り切れるような自然数 n のうち、最大のものを求めよ。`,m]}],
+[2,()=>{const a=R(1,6),b=R(1,6),c=R(1,20),M=c+a*b;let k=0;for(let d=-M;d<=M;d++)if(d&&M%d==0)k++;return[`方程式 xy − ${co(a,'x')} − ${co(b,'y')} = ${c} を満たす整数の組 (x, y) は何組あるか。`,k]}],
+[2,()=>{const m=P([7,13,19]),N=R(50,300);let c=0;for(let n=1;n<=N;n++)if((n*n+n+1)%m==0)c++;return[`${N} 以下の自然数 n のうち、n<sup>2</sup> + n + 1 が ${m} の倍数となるものは何個あるか。`,c]}],
+[2,()=>{const N=R(1,9)**2+R(1,9)**2+R(1,9)**2;let c=0;for(let a=0;a*a<=N;a++)for(let b=a;a*a+b*b<=N;b++){const r=N-a*a-b*b,s=Math.round(Math.sqrt(r));if(s*s==r&&s>=b)c++}return[`a<sup>2</sup> + b<sup>2</sup> + c<sup>2</sup> = ${N} を満たす 0 以上の整数の組 (a, b, c)（a ≦ b ≦ c）は何組あるか。`,c]}],
+[2,()=>{const n=R(6,60),k=phi(n);let c=0;for(let m=1;m<=10*k+10;m++)if(phi(m)==k)c++;return[`φ(n) = ${k} を満たす自然数 n は何個あるか。ただし φ(n) は n 以下で n と互いに素な正の整数の個数。`,c]}],
+[2,()=>{const b=P([2,3,5,7]),d=R(5,20);let c=0;for(let n=0;n<=150;n++)if((BigInt(b)**BigInt(n)).toString().length==d)c++;return[`${sp(b,'n')} がちょうど ${d} 桁の整数となるような 0 以上の整数 n は何個あるか。`,c]}],
+[2,()=>{const M=2**R(1,8)*3**R(0,5)*5**R(0,3)*P([1,7,11]);let f=1n,n=1;for(;;){f*=BigInt(n);if(f%BigInt(M)==0n)break;n++}return[`n! が ${M}（= ${pf(M)}）で割り切れるような最小の自然数 n を求めよ。`,n]}],
+[2,()=>{const N=R(20,200);let row=[1];for(let i=0;i<N;i++){const nr=[1];for(let j=1;j<row.length;j++)nr.push((row[j-1]+row[j])%2);nr.push(1);row=nr}return[`二項係数 <sub>${N}</sub>C<sub>k</sub>（k = 0, 1, …, ${N}）のうち、奇数であるものは何個あるか。`,row.filter(x=>x).length]}],
+[2,()=>{const g=R(2,6),S=g*R(7,30);let c=0;for(let a=1;2*a<S;a++)if(gcd(a,S-a)==g)c++;return[`和が ${S}、最大公約数が ${g} であるような自然数の組 (a, b)（a < b）は何組あるか。`,c]}],
+[2,()=>{const N=R(10,100);let s=0;for(let k=1;k<=N;k++)s+=Math.floor(N/k);return[`⌊${N}/1⌋ + ⌊${N}/2⌋ + … + ⌊${N}/${N}⌋ の値を求めよ。ただし ⌊x⌋ は x を超えない最大の整数。`,s]}],
+[2,()=>{const b=P([12,18,20,24,30,36,45,50,60,72,75]),N=R(30,300),f=fac(b);const z=Math.min(...Object.entries(f).map(([p,e])=>Math.floor(leg(N,+p)/e)));return[`${N}! を ${b} 進法で表したとき、末尾に 0 が連続して何個並ぶか。`,z]}]
+];
+const L=[0,1,2].map(l=>G.filter(g=>g[0]==l));
+const sh=a=>[...a].sort(()=>Math.random()-.5);
+const NAME=['初級','中級','上級'];
+function build(){
+  const gs=[...sh(L[0]).slice(0,2),...sh(L[1]).slice(0,2),...sh(L[2]).slice(0,1)];
+  return gs.map((g,i)=>{const[q,a]=g[1]();return `<div class="card"><div class="top"><span class="no">(${i+1})</span><span class="tag t${g[0]}">${NAME[g[0]]}</span></div><div class="q">${q}</div><div class="ans">答え：${a}</div><button class="tg" style="margin-top:10px">答えを見る</button></div>`}).join('');
+}
+const KEY='integerGachaDaily';
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+const ld=()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}};
+let done=false;
+function show(html,spent){document.getElementById('list').innerHTML=html;done=spent;const b=document.getElementById('roll');b.disabled=spent;b.style.opacity=spent?.5:1;document.getElementById('msg').textContent=spent?'今日はもうガチャを回しました。また明日どうぞ。（0時にリセット）':''}
+function roll(){if(done)return;const h=build();try{localStorage.setItem(KEY,JSON.stringify({d:today(),h}))}catch(e){}show(h,true)}
+document.getElementById('roll').addEventListener('click',roll);
+document.getElementById('all').addEventListener('click',()=>document.querySelectorAll('.card').forEach(c=>c.classList.add('open')));
+document.getElementById('list').addEventListener('click',e=>{if(e.target.classList.contains('tg'))e.target.parentNode.classList.toggle('open')});
+const saved=ld();
+if(saved&&saved.d===today())show(saved.h,true);else show('<div class="card"><div class="q">「ガチャを回す」を押して、今日の5題を引こう。</div></div>',false);
+</script>
+</body>
+</html>
